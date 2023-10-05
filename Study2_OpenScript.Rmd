@@ -1,0 +1,677 @@
+---
+title: "Study2_MindsetInfidelity_OpenScript"
+author: "Tris"
+date: "2023-10-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Packages
+
+```{r}
+library(readr)
+library(psych)
+library(car)
+library(tidyverse)
+library(Hmisc)
+library(ppcor)
+library(lessR)
+library(corrplot)
+library(tidyr)
+library(lm.beta)
+library(dplyr)
+
+```
+
+#set wd - load data
+
+```{r}
+setwd("...")
+
+MindInfi_2 <- read.csv(".../study2.0.csv")
+
+```
+
+# Descriptives 
+
+```{r}
+names(MindInfi_2)
+table(MindInfi_2$gender)
+table(MindInfi_2$nation_group, MindInfi_2$gender)
+table((MindInfi_2$Age))
+```
+
+# Mindset Scale - Creation:
+
+```{r}
+#Mindset
+
+names(MindInfi_2)
+
+MindInfi_2$TightLoose_5R <- car::recode(MindInfi_2$TightLoose_5, "1=6; 2=5; 3=4; 4=3; 5=2; 6=1")
+
+str(MindInfi_2$TightLoose_5R)
+str(MindInfi_2$TightLoose_5)
+
+psych::alpha(MindInfi_2[,c("TightLoose_1", "TightLoose_2", "TightLoose_3", "TightLoose_4", "TightLoose_5R", "TightLoose_6")])
+
+#item correlations:
+MindInfi_2$Total_Score2 <- rowSums(MindInfi_2[, c("TightLoose_1", "TightLoose_2", 
+    "TightLoose_3", "TightLoose_4", "TightLoose_5R", "TightLoose_6")])
+
+item_names2 <- c("TightLoose_1", "TightLoose_2", "TightLoose_3", "TightLoose_4", "TightLoose_5R", "TightLoose_6")
+
+item_total_correlations2 <- sapply(item_names2, function(item) {
+  correlation <- cor(MindInfi_2[[item]], MindInfi_2$Total_Score2, use = "pairwise.complete.obs")
+  p_value <- cor.test(MindInfi_2[[item]], MindInfi_2$Total_Score2, use = "pairwise.complete.obs")$p.value
+  c(correlation = correlation, p_value = p_value)
+})
+
+# Print item-total correlations and their p-values
+item_total_correlations2
+
+###Scale
+
+MindInfi_2 <- MindInfi_2 %>%
+  mutate(MindsetScale = dplyr::select(. ,c(TightLoose_1, TightLoose_2, TightLoose_3, TightLoose_4, TightLoose_5R, TightLoose_6)) %>% rowMeans(na.rm = TRUE))
+
+head(MindInfi_2$MindsetScale)
+summary(MindInfi_2$MindsetScale)
+
+```
+
+# TIPI - 
+
+```{r}
+
+#Personality
+## Extraversion
+
+MindInfi_2$TIPI_6R <- car::recode(MindInfi_2$TIPI_6, '1=7; 2=6; 3=5; 4=4; 5=3; 6=2; 7=1')
+str(MindInfi_2$TIPI_6R)
+str(MindInfi_2$TIPI_6)
+
+psych::alpha(MindInfi_2[,c("TIPI_1", "TIPI_6R")])
+
+###Scale
+
+MindInfi_2 <- MindInfi_2 %>%
+  mutate(Extraversion = dplyr::select(. ,c(TIPI_1, TIPI_6R)) %>% rowMeans(na.rm = TRUE))
+
+head(MindInfi_2$Extraversion)
+
+##Agreeableness
+MindInfi_2$TIPI_2R <- car::recode(MindInfi_2$TIPI_2, '1=7; 2=6; 3=5; 4=4; 5=3; 6=2; 7=1')
+psych::alpha(MindInfi_2[,c("TIPI_2R", "TIPI_7")])
+
+###Scale
+
+MindInfi_2 <- MindInfi_2 %>%
+  mutate(Agreeableness = dplyr::select(. ,c(TIPI_2R, TIPI_7)) %>% rowMeans(na.rm = TRUE))
+
+head(MindInfi_2$Agreeableness)
+
+##Conscientiousness
+MindInfi_2$TIPI_8R <- car::recode(MindInfi_2$TIPI_8, '1=7; 2=6; 3=5; 4=4; 5=3; 6=2; 7=1')
+psych::alpha(MindInfi_2[,c("TIPI_3", "TIPI_8R")])
+
+###Scale
+
+MindInfi_2 <- MindInfi_2 %>%
+  mutate(Conscientiousness = dplyr::select(. ,c(TIPI_3, TIPI_8R)) %>% rowMeans(na.rm = TRUE))
+
+head(MindInfi_2$Conscientiousness)
+
+##Emotional Stability
+MindInfi_2$TIPI_4R <- car::recode(MindInfi_2$TIPI_4, '1=7; 2=6; 3=5; 4=4; 5=3; 6=2; 7=1')
+psych::alpha(MindInfi_2[,c("TIPI_4R", "TIPI_9")])
+
+###Scale
+
+MindInfi_2 <- MindInfi_2 %>%
+  mutate(EmotionalStability = dplyr::select(. ,c(TIPI_4R, TIPI_9)) %>% rowMeans(na.rm = TRUE))
+
+head(MindInfi_2$EmotionalStability)
+
+##OpennesstoExperiences
+MindInfi_2$TIPI_10R <- car::recode(MindInfi_2$TIPI_10, '1=7; 2=6; 3=5; 4=4; 5=3; 6=2; 7=1')
+psych::alpha(MindInfi_2[,c("TIPI_5", "TIPI_10R")])
+
+###Scale
+
+MindInfi_2 <- MindInfi_2 %>%
+  mutate(OpenessExperiences = dplyr::select(. ,c(TIPI_5, TIPI_10R)) %>% rowMeans(na.rm = TRUE))
+
+head(MindInfi_2$OpenessExperiences)
+
+```
+
+
+
+# SOI
+
+```{r}
+
+#SOI
+
+##Bx
+psych::alpha(MindInfi_2[,c("SOI_1", "SOI_2", "SOI_3")])
+
+###Scale
+
+MindInfi_2 <- MindInfi_2 %>%
+  mutate(SOI_Bx = dplyr::select(. ,c(SOI_1, SOI_2, SOI_3)) %>% rowMeans(na.rm = TRUE))
+
+
+head(MindInfi_2$SOI_Bx)
+
+
+##attitudes
+MindInfi_2$SOI_6R <- car::recode(MindInfi_2$SOI_6, '1=5; 2=4; 3=3; 4=2; 5=1')
+
+str(MindInfi_2$SOI_6R)
+str(MindInfi_2$SOI_6)
+
+psych::alpha(MindInfi_2[,c("SOI_4", "SOI_5", "SOI_6R")])
+
+###Scale
+MindInfi_2 <- MindInfi_2 %>%
+  mutate(SOI_Att = dplyr::select(. ,c(SOI_4, SOI_5, SOI_6R)) %>% rowMeans(na.rm = TRUE))
+
+head(MindInfi_2$SOI_Att)
+
+
+##desires
+psych::alpha(MindInfi_2[,c ("SOI_7", "SOI_8", "SOI_9")])
+
+###Scale
+
+MindInfi_2 <- MindInfi_2 %>%
+  mutate(SOI_Des = dplyr::select(. ,c(SOI_7, SOI_8, SOI_9)) %>% rowMeans(na.rm = TRUE))
+
+head(MindInfi_2$SOI_Att)
+
+
+##SOI-total
+psych::alpha(MindInfi_2[,c("SOI_1", "SOI_2", "SOI_3", "SOI_4", "SOI_5", "SOI_6R", "SOI_7", "SOI_8", "SOI_9")])
+
+```
+
+# Infidelity
+
+```{r}
+
+#AttitudesInfidelity
+
+MindInfi_2$AttitInfid_2R <- car::recode(MindInfi_2$AttitInfid_2, '1=7; 2=6; 3=5; 4=4; 5=3; 6=2; 7=1')
+MindInfi_2$AttitInfid_5R <- car::recode(MindInfi_2$AttitInfid_5, '1=7; 2=6; 3=5; 4=4; 5=3; 6=2; 7=1')
+MindInfi_2$AttitInfid_6R <- car::recode(MindInfi_2$AttitInfid_6, '1=7; 2=6; 3=5; 4=4; 5=3; 6=2; 7=1')
+MindInfi_2$AttitInfid_7R <- car::recode(MindInfi_2$AttitInfid_7, '1=7; 2=6; 3=5; 4=4; 5=3; 6=2; 7=1')
+MindInfi_2$AttitInfid_8R <- car::recode(MindInfi_2$AttitInfid_8, '1=7; 2=6; 3=5; 4=4; 5=3; 6=2; 7=1')
+MindInfi_2$AttitInfid_12R <- car::recode(MindInfi_2$AttitInfid_12, '1=7; 2=6; 3=5; 4=4; 5=3; 6=2; 7=1')
+
+psych::alpha(MindInfi_2[,c("AttitInfid_1", "AttitInfid_2R", "AttitInfid_3", "AttitInfid_4", "AttitInfid_5R", "AttitInfid_6R", "AttitInfid_7R", "AttitInfid_8R", "AttitInfid_9", "AttitInfid_10", "AttitInfid_11", "AttitInfid_12R")])
+
+
+###Scale
+
+MindInfi_2 <- MindInfi_2 %>%
+  mutate(AttitudesInfidelity = dplyr::select(. ,c(AttitInfid_1, AttitInfid_2R, AttitInfid_3, AttitInfid_4, AttitInfid_5R, AttitInfid_6R, AttitInfid_7R, AttitInfid_8R, AttitInfid_9, AttitInfid_10, AttitInfid_11, AttitInfid_12R)) %>% rowMeans(na.rm = TRUE))
+
+head(MindInfi_2$AttitudesInfidelity)
+
+#IntentsInfidelity
+MindInfi_2$IntentInfid_3R <- car::recode(MindInfi_2$IntentInfid_3, '1=7; 2=6; 3=5; 4=4; 5=3; 6=2; 7=1')
+
+psych::alpha(MindInfi_2[,c("IntentInfid_1", "IntentInfid_2", "IntentInfid_3R", "IntentInfid_4", "IntentInfid_5", "IntentInfid_6", "IntentInfid_7")])
+
+###Scale
+
+MindInfi_2 <- MindInfi_2 %>%
+  mutate(IntentionsInfidelity = dplyr::select(. ,c(IntentInfid_1, IntentInfid_2, IntentInfid_3R, IntentInfid_4, IntentInfid_5, IntentInfid_6, IntentInfid_7)) %>% rowMeans(na.rm = TRUE))
+
+head(MindInfi_2$IntentionsInfidelity)
+
+```
+
+# Attachment
+
+```{r}
+##Anxiety
+
+MindInfi_2$ECR_8R <- car::recode(MindInfi_2$ECR_8, '1=5; 2=4; 3=3; 4=2; 5=1')
+
+psych::alpha(MindInfi_2[,c("ECR_2", "ECR_4", "ECR_6", "ECR_8R", "ECR_10", "ECR_12")])
+
+###Scale
+
+MindInfi_2 <- MindInfi_2 %>%
+  mutate(AnxiousAttachment = dplyr::select(. ,c(ECR_2, ECR_4, ECR_6, ECR_8R, ECR_10, ECR_12)) %>% rowMeans(na.rm = TRUE))
+
+head(MindInfi_2$AnxiousAttachment)
+
+
+
+##Avoidance
+
+MindInfi_2$ECR_1R <- car::recode(MindInfi_2$ECR_1, '1=5; 2=4; 3=3; 4=2; 5=1')
+MindInfi_2$ECR_5R <- car::recode(MindInfi_2$ECR_5, '1=5; 2=4; 3=3; 4=2; 5=1')
+MindInfi_2$ECR_9R <- car::recode(MindInfi_2$ECR_9, '1=5; 2=4; 3=3; 4=2; 5=1')
+
+str(MindInfi_2$ECR_9R)
+str(MindInfi_2$ECR_9)
+
+psych::alpha(MindInfi_2[,c("ECR_1R", "ECR_3", "ECR_5R", "ECR_7", "ECR_9R", "ECR_11")])
+
+
+###Scale
+
+MindInfi_2 <- MindInfi_2 %>%
+  mutate(AvoidanceAttachment = dplyr::select(. ,c(ECR_1R, ECR_3, ECR_5R, ECR_7, ECR_9R, ECR_11)) %>% rowMeans(na.rm = TRUE))
+
+head(MindInfi_2$AvoidancecAttachment)
+```
+
+# Creating data frame with only ECR
+
+```{r}
+ECROnly <- MindInfi_2[ ,c("AnxiousAttachment", "AvoidanceAttachment", "MindsetScale", "gender", "IntentionsInfidelity", "AttitudesInfidelity")]
+
+names(MindInfi_2)
+
+ECROnly1.0 = ECROnly1.0[!is.na(ECROnly1.0$AnxiousAttachment),]
+
+head(ECROnly$AnxiousAttachment)
+head(ECROnly$AvoidanceAttachment)
+
+summary(ECROnly$AnxiousAttachment)
+```
+
+# Running correlations
+
+```{r}
+
+cor.test(MindInfi_2$IntentionsInfidelity, 
+         MindInfi_2$AttitudesInfidelity, 
+         method = "pearson")
+
+cor.test(MindInfi_2$MindsetScale, 
+         MindInfi_2$AttitudesInfidelity, 
+         method = "pearson")
+
+cor.test(MindInfi_2$MindsetScale, 
+         MindInfi_2$IntentionsInfidelity, 
+         method = "pearson")
+
+names(MindInfi_1)
+
+rcorr(as.matrix(MindInfi_2[, c("IntentionsInfidelity", 
+                               "AttitudesInfidelity", 
+                               "MindsetScale")], 
+                type = "pearson"))
+
+rcorr(as.matrix(MindInfi_2[, c("IntentionsInfidelity", 
+                               "AttitudesInfidelity",
+                               "MindsetScale",
+                               "OpenessExperiences", 
+                               "Conscientiousness",
+                               "Extraversion", 
+                               "Agreeableness", 
+                               "EmotionalStability")], 
+                type = "pearson"))
+
+rcorr(as.matrix(MindInfi_2[, c("IntentionsInfidelity", 
+                               "AttitudesInfidelity",
+                               "MindsetScale",
+                               "SOI_Bx",
+                               "SOI_Att",
+                               "SOI_Des")], 
+                type = "pearson"))
+
+rcorr(as.matrix(ECROnly[, c("IntentionsInfidelity", 
+                               "AttitudesInfidelity",
+                               "MindsetScale",
+                            "AvoidanceAttachment",
+                               "AnxiousAttachment")], 
+                type = "pearson"))
+
+##Partial correlations for intentions
+
+pcor.test(MindInfi_2$IntentionsInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$OpenessExperiences,
+          method = "pearson")
+
+pcor.test(MindInfi_2$IntentionsInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$Conscientiousness,
+          method = "pearson")
+
+pcor.test(MindInfi_2$IntentionsInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$Extraversion,
+          method = "pearson")
+
+
+pcor.test(MindInfi_2$IntentionsInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$Agreeableness,
+          method = "pearson")
+
+pcor.test(MindInfi_2$IntentionsInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$EmotionalStability,
+          method = "pearson")
+
+pcor.test(MindInfi_2$IntentionsInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$SOI_Bx,
+          method = "pearson")
+
+pcor.test(MindInfi_2$IntentionsInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$SOI_Att,
+          method = "pearson")
+
+pcor.test(MindInfi_2$IntentionsInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$SOI_Des,
+          method = "pearson")
+
+pcor.test(ECROnly$IntentionsInfidelity,
+          ECROnly$MindsetScale,
+          ECROnly$AvoidanceAttachment,
+          method = "pearson")
+
+pcor.test(ECROnly$IntentionsInfidelity,
+          ECROnly$MindsetScale,
+          ECROnly$AnxiousAttachment,
+          method = "pearson")
+
+##partial correlations for attitudes
+
+pcor.test(MindInfi_2$AttitudesInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$OpenessExperiences,
+          method = "pearson")
+
+pcor.test(MindInfi_2$AttitudesInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$Conscientiousness,
+          method = "pearson")
+
+pcor.test(MindInfi_2$AttitudesInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$Extraversion,
+          method = "pearson")
+
+pcor.test(MindInfi_2$AttitudesInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$Agreeableness,
+          method = "pearson")
+
+pcor.test(MindInfi_2$AttitudesInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$EmotionalStability,
+          method = "pearson")
+
+pcor.test(MindInfi_2$AttitudesInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$SOI_Bx,
+          method = "pearson")
+
+pcor.test(MindInfi_2$AttitudesInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$SOI_Att,
+          method = "pearson")
+
+pcor.test(MindInfi_2$AttitudesInfidelity,
+          MindInfi_2$MindsetScale,
+          MindInfi_2$SOI_Des,
+          method = "pearson")
+
+pcor.test(ECROnly$AttitudesInfidelity,
+          ECROnly$MindsetScale,
+          ECROnly$AvoidanceAttachment,
+          method = "pearson")
+
+pcor.test(ECROnly$AttitudesInfidelity,
+          ECROnly$MindsetScale,
+          ECROnly$AnxiousAttachment,
+          method = "pearson")
+```
+
+# Hierarchial Linear Regressions & nested models: Personality: Attitudes & Intentions
+
+```{r}
+## Attitudes
+names(MindInfi_2)
+
+Step2_AttBig5 <- lm(AttitudesInfidelity ~ gender +
+                 OpenessExperiences +
+                  Conscientiousness + 
+                  Extraversion +
+                   Agreeableness +
+                   EmotionalStability,
+            data = MindInfi_2)
+
+Step3_AttBig5Mind <- lm(AttitudesInfidelity ~ gender +
+                  OpenessExperiences +
+                  Conscientiousness + 
+                  Extraversion +
+                   Agreeableness +
+                   EmotionalStability +
+                   MindsetScale,    
+            data = MindInfi_2)
+
+
+Step2_AttBig5.beta <- lm.beta(Step2_AttBig5)
+Step3_AttBig5Mind.beta <- lm.beta(Step3_AttBig5Mind)
+
+summary(Step1_Att.beta)
+summary(Step2_AttBig5.beta)
+summary(Step3_AttBig5Mind.beta)
+
+summary(Step2_AttBig5)$adj.r.squared - summary(Step1Att)$adj.r.squared
+summary(Step3_AttBig5Mind)$adj.r.squared - summary(Step2_AttBig5)$adj.r.squared
+
+anova(Step1Att, Step2_AttBig5, Step3_AttBig5Mind)
+
+
+###Intentions
+Step1Intent <- lm(IntentionsInfidelity ~ gender, 
+            data = MindInfi_2)
+
+Step2_IntentBig5 <- lm(IntentionsInfidelity ~ gender +
+                 OpenessExperiences +
+                  Conscientiousness + 
+                  Extraversion +
+                   Agreeableness +
+                   EmotionalStability,
+            data = MindInfi_2)
+
+Step3_IntentBig5Mind <- lm(IntentionsInfidelity ~ gender +
+                  OpenessExperiences +
+                  Conscientiousness + 
+                  Extraversion +
+                   Agreeableness +
+                   EmotionalStability +
+                   MindsetScale,    
+            data = MindInfi_2)
+
+Step1Intent.beta <- lm.beta(Step1Intent)
+Step2_IntentBig5.beta <- lm.beta(Step2_IntentBig5)
+Step3_IntentBig5Mind.beta <- lm.beta(Step3_IntentBig5Mind)
+
+summary(Step1Intent.beta)
+summary(Step2_IntentBig5.beta)
+summary(Step3_IntentBig5Mind.beta)
+
+summary(Step2_IntentBig5)$adj.r.squared - summary(Step1Intent)$adj.r.squared
+summary(Step3_IntentBig5Mind)$adj.r.squared - summary(Step2_IntentBig5)$adj.r.squared
+
+anova(Step1Intent, Step2_IntentBig5, Step3_IntentBig5Mind)
+
+```
+
+
+# Hierarchial Linear Regressions & nested models: SOI: Attitudes & Intentions
+
+```{r}
+
+names(MindInfi_2)
+
+#Step/Block 1: using lm for linear modelling : 
+#Rules of thumb for R-squared (small = .01, med = .09, large = .25)
+
+Step1Att <- lm(AttitudesInfidelity ~ gender, 
+            data = MindInfi_2)
+
+summary(Step1Att)
+
+Step1_Att.beta <- lm.beta(Step1Att)
+summary(Step1_Att.beta)
+
+#Step/Block2:
+
+Step2_AttSOI <- lm(AttitudesInfidelity ~ gender + 
+                  SOI_Bx +
+                  SOI_Att + 
+                  SOI_Des,
+                data = MindInfi_2)
+
+summary(Step2_AttSOI)
+
+Step2_AttSOI.beta <- lm.beta(Step2_AttSOI)
+summary(Step2_AttSOI.beta)
+
+#Step/Block3:
+
+Step3_AttSOIMind <- lm(AttitudesInfidelity ~ gender + 
+                  SOI_Bx +
+                  SOI_Att + 
+                  SOI_Des +
+                    MindsetScale,
+                data = MindInfi_2)
+
+nrow(model.frame(Step3_AttSOIMind))
+
+summary(Step3_AttSOIMind)
+
+#standardized beta coefficients
+
+Step3_AttSOIMind.beta <- lm.beta(Step3_AttSOIMind)
+summary(Step3_AttSOIMind.beta)
+
+#Nested model comparison
+
+anova(Step1Att, Step2_AttSOI, Step3_AttSOIMind)
+
+#Change in R-squared (incremental variance explained)
+summary(Step2_AttSOI)$r.squared
+
+summary(Step3_AttSOIMind)$adj.r.squared - summary(Step2_AttSOI)$adj.r.squared
+
+###Intentions
+
+Step1Intent <- lm(IntentionsInfidelity ~ gender, 
+            data = MindInfi_2)
+
+Step2_IntentSOI <- lm(IntentionsInfidelity ~ gender +
+                 SOI_Bx +
+                  SOI_Att + 
+                  SOI_Des,    
+            data = MindInfi_2)
+
+Step3_IntentSOIMind <- lm(IntentionsInfidelity ~ gender +
+                 SOI_Bx +
+                  SOI_Att + 
+                  SOI_Des +
+                   MindsetScale,    
+            data = MindInfi_2)
+
+Step1Intent.beta <- lm.beta(Step1Intent)
+Step2_IntentSOI.beta <- lm.beta(Step2_IntentSOI)
+Step3_IntentSOIMind.beta <- lm.beta(Step3_IntentSOIMind)
+
+summary(Step1Intent.beta)
+summary(Step2_IntentSOI.beta)
+summary(Step3_IntentSOIMind.beta)
+
+summary(Step2_IntentSOI)$adj.r.squared - summary(Step1Intent)$adj.r.squared
+summary(Step3_IntentSOIMind)$adj.r.squared - summary(Step2_IntentSOI)$adj.r.squared
+
+anova(Step1Intent, Step2_IntentSOI, Step3_IntentSOIMind)
+```
+
+# Attachment: ECR - Hierarchial regressions and nested model
+
+```{r}
+names(ECROnly)
+
+#Attitudes
+
+Step1_Att_ECR <- lm(AttitudesInfidelity ~ gender,
+                    data = ECROnly)
+
+
+Step2_AttAttachment <- lm(AttitudesInfidelity ~ gender +
+                AnxiousAttachment +
+                  AvoidanceAttachment,
+            data = ECROnly)
+
+Step3_AttAttachMind <- lm(AttitudesInfidelity ~ gender +
+                  AnxiousAttachment +
+                  AvoidanceAttachment +
+                   MindsetScale,    
+            data = ECROnly)
+
+Step1_Att_ECR.beta <- lm.beta(Step1_Att_ECR)
+Step2_AttAttachment.beta <- lm.beta(Step2_AttAttachment)
+Step3_AttAttachMind.beta <- lm.beta(Step3_AttAttachMind)
+
+summary(Step1_Att_ECR.beta)
+summary(Step2_AttAttachment.beta)
+summary(Step3_AttAttachMind.beta)
+
+summary(Step2_AttAttachment)$adj.r.squared - summary(Step1_Att_ECR)$adj.r.squared
+summary(Step3_AttAttachMind)$adj.r.squared - summary(Step2_AttAttachment)$adj.r.squared
+
+anova(Step1_Att_ECR, Step2_AttAttachment, Step3_AttAttachMind)
+
+
+###Intentions
+
+Step1_Intent_ECR <- lm(IntentionsInfidelity ~ gender,
+                    data = ECROnly)
+
+
+Step2_IntentAttachment <- lm(IntentionsInfidelity ~ gender +
+                AnxiousAttachment +
+                  AvoidanceAttachment,
+            data = ECROnly)
+
+Step3_IntentAttachMind <- lm(IntentionsInfidelity ~ gender +
+                  AnxiousAttachment +
+                  AvoidanceAttachment +
+                   MindsetScale,    
+            data = ECROnly)
+
+Step1_Intent_ECR.beta <- lm.beta(Step1_Intent_ECR)
+Step2_IntentAttachment.beta <- lm.beta(Step2_IntentAttachment)
+Step3_IntentAttachMind.beta <- lm.beta(Step3_IntentAttachMind)
+
+summary(Step1_Intent_ECR.beta)
+summary(Step2_IntentAttachment.beta)
+summary(Step3_IntentAttachMind.beta)
+
+summary(Step2_IntentAttachment)$adj.r.squared - summary(Step1_Intent_ECR)$adj.r.squared
+summary(Step3_IntentAttachMind)$adj.r.squared - summary(Step2_IntentAttachment)$adj.r.squared
+
+anova(Step1_Intent_ECR, Step2_IntentAttachment, Step3_IntentAttachMind)
+
+
+```
